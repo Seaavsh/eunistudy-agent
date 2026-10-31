@@ -75,30 +75,15 @@ export function confirmProfile(message:string,profile:Fields,facts:Fields):{conf
  return {confirmed,profile:confirmed?{...profile,...facts}:profile};
 }
 
-// Discovery needs only confirmed search preferences. Academic and budget fields
-// refine assessment and ranking; they must not block a useful initial shortlist.
+// Normally finish intake first; an explicit request to browse is allowed sooner.
 export function canRecommend(profile:Fields,message:string):boolean {
- if(/\b(?:show|browse|list|find|recommend|suggest)\b.{0,45}\b(?:universit(?:y|ies)|program(?:me)?s?|courses?|options)\b/i.test(message))return true;
- const required=['degree','subject','destination'];
+ if(/\b(?:show|see|browse|list|find|recommend|suggest)\b.{0,45}\b(?:universit(?:y|ies)|program(?:me)?s?|courses?|options)\b/i.test(message)||/\b(?:what|which)\s+(?:universities|program(?:me)?s?|courses?|options)\b/i.test(message))return true;
+ const required=['degree','subject','destination','priorEducation','gpa','gpaScale','languageTest','languageScore','budget','currency','intake','studyLanguage'];
  if(!required.every(k=>profile[k]?.trim()))return false;
  if(!['Bachelor','Master'].includes(profile.degree)||!['Germany','Italy','Canada','Netherlands'].includes(profile.destination))return false;
- // Reject contradictory/invalid values when supplied, but allow a student to
- // browse while optional assessment details (for example GPA scale) are absent.
- if(profile.gpa){
-  const g=Number(profile.gpa);
-  if(!Number.isFinite(g)||g<0)return false;
-  if(profile.gpaScale){
-   const scale=Number(profile.gpaScale);
-   if(!['4','5','20','100'].includes(profile.gpaScale)||g>scale)return false;
-  }
- }
- if(profile.budget){const budget=Number(profile.budget);if(!Number.isFinite(budget)||budget<0)return false}
- if(profile.languageScore){
-  const score=Number(profile.languageScore);
-  if(!Number.isFinite(score)||score<0)return false;
-  if(profile.languageTest==='IELTS'&&score>9)return false;
-  if(profile.languageTest==='TOEFL'&&score>120)return false;
- }
- return true;
+ const gpa=Number(profile.gpa),scale=Number(profile.gpaScale);
+ const score=Number(profile.languageScore),budget=Number(profile.budget);
+ if(!['4','5','20','100'].includes(profile.gpaScale)||!Number.isFinite(gpa)||gpa<0||gpa>scale)return false;
+ if(!Number.isFinite(budget)||budget<=0||!Number.isFinite(score)||score<0)return false;
+ return (profile.languageTest==='IELTS'&&score<=9)||(profile.languageTest==='TOEFL'&&score<=120);
 }
-

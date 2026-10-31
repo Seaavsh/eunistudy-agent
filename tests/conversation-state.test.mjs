@@ -29,20 +29,24 @@ test('unknown values are not guessed and completed answers are not re-asked',()=
  assert.equal(needsBetterQuestion('What is your GPA?',{gpa:'18.14',gpaScale:'20'}),true);
 });
 import {canRecommend} from '../lib/conversation-state.ts';
-test('core confirmed search preferences allow discovery even when intake is still in progress',()=>{
+test('early intake does not produce recommendations',()=>{
  const f=conversationFacts([u('master computer engineering'),a('Which country are you considering, and what is your prior education?')],'germany. bachelor computer science',{});
  assert.equal(f.degree,'Master');assert.equal(f.priorEducation,'Bachelor');assert.equal(f.destination,'Germany');
- assert.equal(canRecommend(f,'germany. bachelor computer science'),true);
+ assert.equal(canRecommend(f,'germany. bachelor computer science'),false);
  assert.equal(nextQuestion(f),'What was your GPA or grade?');
 });
-test('recommendation stage needs core preferences; optional missing fields do not block exploration',()=>{
+test('recommendation stage waits for all intake questions',()=>{
  const full={degree:'Master',subject:'Computing',destination:'Germany',priorEducation:'Bachelor',gpa:'18.14',gpaScale:'20',languageTest:'TOEFL',languageScore:'98',budget:'12000',currency:'EUR',intake:'Fall',studyLanguage:'English'};
  assert.equal(canRecommend(full,'yes'),true);
- assert.equal(canRecommend({...full,currency:'',gpaScale:'',intake:'',studyLanguage:''},'yes'),true);
+ assert.equal(canRecommend({...full,currency:'',gpaScale:'',intake:'',studyLanguage:''},'yes'),false);
  assert.equal(canRecommend({...full,languageScore:'150'},'yes'),false);
  assert.equal(canRecommend({...full,gpa:'25'},'yes'),false);
+ assert.equal(canRecommend({...full,languageTest:'Other'},'yes'),false);
  assert.equal(canRecommend({},'show me university options'),true);
+ assert.equal(canRecommend({},'What universities can I apply to?'),true);
+ assert.equal(canRecommend({},'Can I see programmes?'),true);
  assert.equal(canRecommend({},'germany. bachelor computer science'),false);
+ for(const key of Object.keys(full))assert.equal(canRecommend({...full,[key]:''},'yes'),false,`${key} must be confirmed`);
 });
 test('reported complete conversation allows search after profile confirmation',()=>{
  const turns=[u('master'),a('What subject would you like to study?'),u('computer science'),a('Which country would you like to study in?'),u('germany'),a('What is your highest completed education level?'),u('bachelor computer'),a('What was your GPA or grade?'),u('18 out of 20'),a('Do you have a language test result, such as IELTS or TOEFL?'),u('toefl 98'),a('What is your annual budget?'),u('12000 euro'),a('Which intake are you targeting?'),u('fall'),a('What teaching language do you prefer?'),u('english')];
@@ -55,4 +59,3 @@ test('reported complete conversation allows search after profile confirmation',(
  assert.equal(confirmProfile('no',{},f).confirmed,false);
 });
 test('explicit taught-in-English language is extracted in a complete profile',()=>{const f=conversationFacts([], 'I want a master in Computer Engineering in Germany, taught in English.',{});assert.equal(f.studyLanguage,'English')});
-
