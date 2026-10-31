@@ -70,6 +70,11 @@ export function nextQuestion(facts:Fields):string {
  return 'What would you like to explore next?';
 }
 
+export function confirmProfile(message:string,profile:Fields,facts:Fields):{confirmed:boolean;profile:Fields} {
+ const confirmed=/^(?:confirm|confirmed|yes|yes[,! ]+(?:confirm|that(?:'s| is) correct|everything is correct)|confirm (?:my )?profile|that(?:'s| is) correct|everything is correct)[.! ]*$/i.test(message.trim());
+ return {confirmed,profile:confirmed?{...profile,...facts}:profile};
+}
+
 // Discovery needs only confirmed search preferences. Academic and budget fields
 // refine assessment and ranking; they must not block a useful initial shortlist.
 export function canRecommend(profile:Fields,message:string):boolean {

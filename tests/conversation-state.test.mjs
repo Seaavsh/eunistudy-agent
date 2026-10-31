@@ -1,5 +1,5 @@
 import {test} from 'node:test';import assert from 'node:assert/strict';
-import {conversationFacts,needsBetterQuestion,nextQuestion} from '../lib/conversation-state.ts';
+import {conversationFacts,needsBetterQuestion,nextQuestion,confirmProfile} from '../lib/conversation-state.ts';
 import {assessOfficial} from '../lib/official-assessment.ts';
 const a=text=>({role:'assistant',text}),u=text=>({role:'user',text});
 test('reported conversation remembers bachelor, split GPA, TOEFL, budget and currency',()=>{
@@ -48,7 +48,11 @@ test('reported complete conversation allows search after profile confirmation',(
  const turns=[u('master'),a('What subject would you like to study?'),u('computer science'),a('Which country would you like to study in?'),u('germany'),a('What is your highest completed education level?'),u('bachelor computer'),a('What was your GPA or grade?'),u('18 out of 20'),a('Do you have a language test result, such as IELTS or TOEFL?'),u('toefl 98'),a('What is your annual budget?'),u('12000 euro'),a('Which intake are you targeting?'),u('fall'),a('What teaching language do you prefer?'),u('english')];
  const f=conversationFacts(turns,'confirm',{});
  assert.deepEqual([f.degree,f.subject,f.destination,f.priorEducation,f.gpa,f.gpaScale,f.languageTest,f.languageScore,f.budget,f.currency,f.intake,f.studyLanguage],['Master','Computer Science','Germany','Bachelor','18','20','TOEFL','98','12000','EUR','Fall','English']);
- assert.equal(canRecommend(f,'confirm'),true);
+ const accepted=confirmProfile('confirm',{},f);
+ assert.equal(accepted.confirmed,true);
+ assert.equal(accepted.profile.degree,'Master');
+ assert.equal(canRecommend(accepted.profile,'confirm'),true);
+ assert.equal(confirmProfile('no',{},f).confirmed,false);
 });
 test('explicit taught-in-English language is extracted in a complete profile',()=>{const f=conversationFacts([], 'I want a master in Computer Engineering in Germany, taught in English.',{});assert.equal(f.studyLanguage,'English')});
 
