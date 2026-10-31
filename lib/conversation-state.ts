@@ -70,11 +70,30 @@ export function nextQuestion(facts:Fields):string {
  return 'What would you like to explore next?';
 }
 
-// Recommendations use confirmed profile fields, never unconfirmed extraction.
+// Discovery needs only confirmed search preferences. Academic and budget fields
+// refine assessment and ranking; they must not block a useful initial shortlist.
 export function canRecommend(profile:Fields,message:string):boolean {
  if(/\b(?:show|browse|list|find|recommend|suggest)\b.{0,45}\b(?:universit(?:y|ies)|program(?:me)?s?|courses?|options)\b/i.test(message))return true;
- const required=['degree','subject','destination','priorEducation','gpa','gpaScale','languageTest','languageScore','budget','currency','intake','studyLanguage'];
- if(!required.every(k=>profile[k]))return false;
- const g=Number(profile.gpa),scale=Number(profile.gpaScale),score=Number(profile.languageScore),budget=Number(profile.budget);
- return Number.isFinite(g)&&g>=0&&['4','5','20','100'].includes(profile.gpaScale)&&g<=scale&&Number.isFinite(budget)&&budget>0&&Number.isFinite(score)&&score>=0&&((profile.languageTest==='IELTS'&&score<=9)||(profile.languageTest==='TOEFL'&&score<=120));
+ const required=['degree','subject','destination'];
+ if(!required.every(k=>profile[k]?.trim()))return false;
+ if(!['Bachelor','Master'].includes(profile.degree)||!['Germany','Italy','Canada','Netherlands'].includes(profile.destination))return false;
+ // Reject contradictory/invalid values when supplied, but allow a student to
+ // browse while optional assessment details (for example GPA scale) are absent.
+ if(profile.gpa){
+  const g=Number(profile.gpa);
+  if(!Number.isFinite(g)||g<0)return false;
+  if(profile.gpaScale){
+   const scale=Number(profile.gpaScale);
+   if(!['4','5','20','100'].includes(profile.gpaScale)||g>scale)return false;
+  }
+ }
+ if(profile.budget){const budget=Number(profile.budget);if(!Number.isFinite(budget)||budget<0)return false}
+ if(profile.languageScore){
+  const score=Number(profile.languageScore);
+  if(!Number.isFinite(score)||score<0)return false;
+  if(profile.languageTest==='IELTS'&&score>9)return false;
+  if(profile.languageTest==='TOEFL'&&score>120)return false;
+ }
+ return true;
 }
+
