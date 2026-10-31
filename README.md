@@ -1,5 +1,7 @@
 # EUnistud local demo
 
+Run `npm run status:project` for a read-only summary of the local revision and catalogue. The hosted `/api/health` reports its Render Git revision when available. See `docs/agent-workflow.md` for the project map and checkout workflow.
+
 ## Render demonstration
 
 The `render.yaml` Blueprint creates a free Node web service. Set `GEMINI_API_KEY` and a long, random `EUNISTUD_DEMO_PASSWORD` in Render's environment settings; neither secret belongs in Git. The demo uses the username `demo` and the configured password. The Blueprint uses the same Gemini model as the existing local configuration, and `GEMINI_MODEL` can be changed in Render if needed. Gemini usage may incur charges under the connected Google Cloud project.
