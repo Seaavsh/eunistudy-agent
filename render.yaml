@@ -1,0 +1,23 @@
+services:
+  - type: web
+    name: eunistud-demo
+    runtime: node
+    plan: free
+    buildCommand: npm ci && npm run build
+    startCommand: npm run start:render
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_VERSION
+        value: 24.11.1
+      - key: EUNISTUD_PUBLIC_DEMO
+        value: '1'
+      - key: EUNISTUD_BROWSER_STATE
+        value: '1'
+      - key: EUNISTUD_DISABLE_SEMANTIC
+        value: '1'
+      - key: EUNISTUD_DEMO_PASSWORD
+        sync: false
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: GEMINI_MODEL
+        value: gemini-3.8-flash-lite

@@ -1,0 +1,4 @@
+import {NextRequest,NextResponse} from 'next/server';
+import {retrieveItalian} from '@/lib/retrieve-italy';
+import {semanticItalian} from '@/lib/semantic-italy';
+export async function GET(req:NextRequest){const q=(req.nextUrl.searchParams.get('q')||'').trim().slice(0,256);const degree=req.nextUrl.searchParams.get('degree')||'';const language=req.nextUrl.searchParams.get('language')||'';if(!['','Bachelor','Master'].includes(degree)||!['','English','Italian','German'].includes(language))return NextResponse.json({error:'Invalid filters'},{status:400});const profile={degree,studyLanguage:language};const lexical=retrieveItalian(q,profile);let semantic:Awaited<ReturnType<typeof semanticItalian>>=[];let semanticAvailable=true;try{semantic=await semanticItalian(q,profile)}catch{semanticAvailable=false}return NextResponse.json({lexical,semantic,semanticAvailable})}
